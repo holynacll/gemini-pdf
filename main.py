@@ -91,11 +91,63 @@ async def analyze_contract(file: Annotated[UploadFile, File(description="A contr
 @app.get("/")
 async def main():
     content = """
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+.upload-container {
+  display: inline-block; 
+  position: relative;    
+}
+
+.upload-label {
+  display: block;
+  width: 240px;
+  height: 30px;
+  background-color: #6c757d; /* Cinza médio */
+  color: white;
+  text-align: center;
+  line-height: 30px; 
+  border-radius: 5px;  
+  cursor: pointer;     
+}
+
+.upload-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;          
+  cursor: pointer;     
+}
+
+input[type="submit"] {
+  background-color: #6c757d; /* Mesma cor do botão de upload */
+  color: white;
+  padding: 8px 15px; 
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 10px; 
+}
+
+input[type="submit"]:hover {
+  background-color: #495057; /* Cinza mais escuro ao passar o mouse */
+}
+</style>
+</head>
 <body>
+
 <form action="/analyze-contract" enctype="multipart/form-data" method="post">
-<input name="file" type="file">
-<input type="submit">
+  <div class="upload-container">
+    <label for="files" class="upload-label">Selecione o Contrato</label>
+    <input id="files" name="file" class="upload-input" type="file">
+  </div>
+  <input type="submit" value="Enviar"> 
 </form>
+
 </body>
-    """
+</html>
+"""
     return HTMLResponse(content=content)
