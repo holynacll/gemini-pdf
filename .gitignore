@@ -3,3 +3,4 @@ google-cloud-sdk
 __pycache__
 contratos
 static
+.env
