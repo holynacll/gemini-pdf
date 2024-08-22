@@ -29,7 +29,7 @@
 #     ]
 #     ai_msg = llm.invoke(messages)
 #     print(ai_msg.content)
-    
+
 #     prompt = ChatPromptTemplate.from_messages(
 #         [
 #             (
@@ -40,7 +40,7 @@
 #         ]
 #     )
 
-#     # chain = pdf to images | get resulted text from each image to aws ocr |  
+#     # chain = pdf to images | get resulted text from each image to aws ocr |
 #     chain = prompt | llm | StrOutputParser()
 #     response = chain.invoke(
 #         {
@@ -49,5 +49,5 @@
 #             "input": "I love programming.",
 #         }
 #     )
-    
+
 #     print(response)

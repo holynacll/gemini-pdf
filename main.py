@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Annotated
 from fastapi import FastAPI, UploadFile, File
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -6,11 +7,14 @@ from fastapi.staticfiles import StaticFiles
 from .utils import upload_file, text_parser, update_datasheets, keywords_highlight
 from .analyze_contract import analyze_document
 
+static_path = Path("static")
+if not static_path.exists():
+    static_path.mkdir(parents=True, exist_ok=True)
+
+
 app = FastAPI()
 
-app.mount(
-    "/static", StaticFiles(directory="static"), name="static"
-)
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 prompt_text = """
 Você é um especialista em análise de contratos. Sua tarefa é extrair as seguintes informações de um contrato fornecido:
@@ -42,7 +46,9 @@ Se alguma informação não estiver presente no contrato, indique 'Não informad
 
 
 @app.post("/analyze-contract")
-async def analyze_contract(file: Annotated[UploadFile, File(description="A contract pdf file")]):
+async def analyze_contract(
+    file: Annotated[UploadFile, File(description="A contract pdf file")]
+):
     file_path = await upload_file(file)
     text_analyzed = await analyze_document(file_path, prompt_text)
     text_parsed = text_parser(text_analyzed)
