@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
+import unicodedata
 import pandas as pd
-import pymupdf
 import fitz
 from difflib import SequenceMatcher
 from fastapi import UploadFile
@@ -37,27 +37,33 @@ async def update_datasheets(data: dict):
 
 
 async def keywords_highlight(file_path: Path, keywords: dict):
-    doc = pymupdf.open(file_path)
+    bag_of_sentences: list[str] = []
+    doc = fitz.open(file_path)
     for page in doc:
-        text = str(page.get_text().encode("utf8"))
+        text = page.get_text().lower()
         for kw in keywords.values():
-            if kw in text:
-            # substring = search_most_large_substring(kw, text)
-            # if substring != "":
-                quads = page.search_for(kw)
-                for quad in quads:
-                    highlight = page.add_highlight_annot(quad)
-                    highlight.set_colors(stroke=[0,1,0])
-                    highlight.update()
+            # print(bag_of_sentences)
+            bag_of_sentences = search_most_large_substrings(kw, text, bag_of_sentences)
+        for sentence in bag_of_sentences:
+            quads = page.search_for(sentence)
+            for quad in quads:
+                highlight = page.add_highlight_annot(quad)
+                highlight.set_colors(stroke=[0,1,0])
+                highlight.update()
     doc.save(file_path.as_posix(), incremental=True, encryption=fitz.PDF_ENCRYPT_KEEP)
 
 
-def search_most_large_substring(sentence: str, text: str):
+def search_most_large_substrings(sentence: str, text: str, bag_of_words: list[str]):
     substrings = combinacoes_palavras(sentence)
-    for substring in substrings:
-        if substring in text:
-            return substring        
-    return ''
+    count_selected_substrings = 0
+    for i, substring in enumerate(substrings):
+        if substring in text and substring not in bag_of_words:
+            print(substring, bag_of_words)
+            bag_of_words.append(substring)
+            count_selected_substrings += 1
+        if count_selected_substrings > 2:
+            break
+    return bag_of_words
 
 def combinacoes_palavras(sentence):
     """
@@ -71,13 +77,17 @@ def combinacoes_palavras(sentence):
     """
     stopwords = ['RT', 'rt', 'de', 'a', 'o', 'que', 'e', 'do', 'da', 'em', 'um', 'para', 'é', 'com', 'não', 'uma', 'os', 'no', 'se', 'na', 'por', 'mais', 'as', 'dos', 'como', 'mas', 'foi', 'ao', 'ele', 'das', 'tem', 'à', 'seu', 'sua', 'ou', 'há', 'nos', 'já', 'está', 'também', 'só', 'pelo', 'pela', 'até', 'isso', 'ela', 'entre', 'era', 'depois', 'sem', 'mesmo', 'aos', 'ter', 'seus', 'quem', 'nas', 'me', 'esse', 'eles', 'estão', 'essa', 'num', 'nem', 'suas', 'meu', 'às', 'minha', 'têm', 'numa', 'pelos', 'elas', 'havia', 'seja', 'qual', 'será', 'nós', 'tenho', 'lhe', 'deles', 'essas', 'esses', 'pelas', 'este', 'fosse', 'dele', 'tu', 'te', 'vocês', 'vos', 'lhes', 'meus', 'minhas', 'teu', 'tua', 'teus', 'tuas', 'nosso', 'nossa', 'nossos', 'nossas', 'dela', 'delas', 'esta', 'estes', 'estas', 'aquele', 'aquela', 'aqueles', 'aquelas', 'isto', 'aquilo']
 
-    palavras = sentence.split()
-    combinacoes = [sentence]
+    palavras: list[str] = sentence.split()
+    combinacoes: list[str] = [sentence]
     for i in range(len(palavras)):
         for j in range(i + 1, len(palavras) + 1):
             combinacoes.append(" ".join(palavras[i:j]))
+
+    # to lower sentences
+    combinacoes_lowercased = [s.lower() for s in combinacoes]
+
     # filtrar combinacoes
-    combinacoes_filtradas = [comb for comb in combinacoes if comb.lower() not in stopwords]
+    combinacoes_filtradas = [comb for comb in combinacoes_lowercased if comb.lower() not in stopwords]
     
     # ordernar as combinacoes de maior comprimento para menor comprimento
     combinacoes_filtradas_ordenadas = sorted(combinacoes_filtradas, key=len, reverse=True)

@@ -17,7 +17,7 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 prompt_text = """
-Você é um especialista em análise de contratos. Sua tarefa é extrair as seguintes informações de um contrato fornecido:
+Você é um especialista em análise de contratos. Sua tarefa é extrair as seguintes informações de um contrato fornecido, **mantendo o formato original em que aparecem no texto, sem realizar qualquer transformação:**
 
 * Número do contrato
 * Número da licitação
@@ -41,7 +41,7 @@ Objeto do contrato: [objeto do contrato]
 Contratante: [contratante]
 Valor do contrato: [valor do contrato]
 
-Se alguma informação não estiver presente no contrato, indique 'Não informado' no lugar da informação ausente. 
+Se alguma informação não estiver presente no contrato, indique 'Não informado' no lugar da informação ausente.
 """
 
 
