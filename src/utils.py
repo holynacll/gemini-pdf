@@ -1,19 +1,40 @@
 import os
+import asyncio
 from pathlib import Path
-import unicodedata
 import pandas as pd
 import fitz
-from difflib import SequenceMatcher
 from fastapi import UploadFile
+from src.config import settings
 
 async def upload_file(file: UploadFile):
-    p = Path("static")
-    if not p.exists():
-        p.mkdir(parents=True, exist_ok=True)
-    file_path = p / file.filename
-    with file_path.open(mode="wb") as f:
+    original_file_path = settings.static_dir / f"original_{file.filename}"
+    optimized_file_path = settings.static_dir / file.filename
+
+    # Salva o arquivo original temporariamente
+    with original_file_path.open(mode="wb") as f:
         f.write(await file.read())
-    return file_path
+
+    # Otimiza o PDF com Ghostscript (assíncrono)
+    try:
+        process = await asyncio.create_subprocess_exec(
+            'gs', '-sDEVICE=pdfwrite', '-dCompatibilityLevel=1.4', '-dPDFSETTINGS=/default', 
+            '-dNOPAUSE', '-dQUIET', '-dBATCH', '-o', str(optimized_file_path), str(original_file_path)
+        )
+        await process.wait()
+
+        if process.returncode != 0:
+            raise Exception(f"Ghostscript optimization failed with return code {process.stderr}")
+
+        # Remove o arquivo original (opcional, dependendo da sua lógica)
+        original_file_path.unlink()
+
+        return optimized_file_path
+
+    except Exception as e:
+        # Lidar com erros de otimização
+        print(f"Error optimizing PDF: {e}")
+        # Opcionalmente, retornar o caminho do arquivo original se a otimização falhar
+        return original_file_path
 
 
 def text_parser(text: str):
@@ -39,31 +60,30 @@ async def update_datasheets(data: dict):
 async def keywords_highlight(file_path: Path, keywords: dict):
     bag_of_sentences: list[str] = []
     doc = fitz.open(file_path)
+    text = ''
     for page in doc:
-        text = page.get_text().lower()
-        for kw in keywords.values():
-            # print(bag_of_sentences)
-            bag_of_sentences = search_most_large_substrings(kw, text, bag_of_sentences)
+        text += str(page.get_text().lower()) + " "
+    print(text)
+    for kw in keywords.values():
+        search_most_large_substrings(kw, text, bag_of_sentences)
+    print(f"bag_of_sentences: {bag_of_sentences}")
+    for page in doc:
         for sentence in bag_of_sentences:
             quads = page.search_for(sentence)
             for quad in quads:
                 highlight = page.add_highlight_annot(quad)
-                highlight.set_colors(stroke=[0,1,0])
+                highlight.set_colors(stroke=[1,1,0]) # yellow
                 highlight.update()
     doc.save(file_path.as_posix(), incremental=True, encryption=fitz.PDF_ENCRYPT_KEEP)
 
 
 def search_most_large_substrings(sentence: str, text: str, bag_of_words: list[str]):
     substrings = combinacoes_palavras(sentence)
-    count_selected_substrings = 0
-    for i, substring in enumerate(substrings):
+    for substring in substrings:
         if substring in text and substring not in bag_of_words:
-            print(substring, bag_of_words)
             bag_of_words.append(substring)
-            count_selected_substrings += 1
-        if count_selected_substrings > 2:
-            break
-    return bag_of_words
+        
+
 
 def combinacoes_palavras(sentence):
     """
@@ -88,7 +108,16 @@ def combinacoes_palavras(sentence):
 
     # filtrar combinacoes
     combinacoes_filtradas = [comb for comb in combinacoes_lowercased if comb.lower() not in stopwords]
-    
+
     # ordernar as combinacoes de maior comprimento para menor comprimento
     combinacoes_filtradas_ordenadas = sorted(combinacoes_filtradas, key=len, reverse=True)
     return combinacoes_filtradas_ordenadas
+
+
+def json_to_text_with_newlines(json_object: dict):
+  """Converts a JSON object to text with newlines between key-value pairs."""
+
+  formatted_text = ""
+  for key, value in json_object.items():
+    formatted_text += f"{key}: {value}\n" 
+  return formatted_text
