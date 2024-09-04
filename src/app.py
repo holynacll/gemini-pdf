@@ -22,31 +22,38 @@ app = FastAPI()
 app.mount(settings.static_dir.as_posix(), StaticFiles(directory="static"), name="static")
 
 prompt_text = """
-Você é um especialista em análise de contratos. Sua tarefa é extrair as seguintes informações de um contrato fornecido, **mantendo o formato original em que aparecem no texto, sem realizar qualquer transformação:**
+Você é um especialista em análise de contratos. Sua tarefa é extrair as seguintes informações de um contrato fornecido e apresentá-las em um formato JSON estruturado:
 
-* Número do contrato
-* Número da licitação
-* Data da assinatura
-* Data de vencimento
-* Fornecedor (contratada), incluindo o CNPJ
-* Modalidade da licitação
-* Objeto do contrato
-* Contratante
-* Valor do contrato
+* **n_contrato:** Número do contrato (no formato que corresponde à expressão regular "\d+/\d+")
+* **n_licitacao:** Número da licitação (no formato que corresponde à expressão regular "\d+/\d+")
+* **assinatura:** Data da assinatura (no formato "DD/MM/AAAA")
+* **vencimento:** Data de vencimento (no formato "DD/MM/AAAA" ou string vazia se não informado)
+* **contratada:** Nome do Fornecedor 
+* **cnpj:** CNPJ do Fornecedor (contratada) (no formato "XX.XXX.XXX/XXXX-XX")
+* **modalidade:** Modalidade da licitação
+* **objeto:** Objeto do contrato
+* **contratante:** Nome da Contratante
+* **valor:** Valor do contrato (apenas números e vírgula, sem "R$" ou texto)
+* **filename:** Nome do arquivo PDF
 
-Apresente as informações extraídas no seguinte formato:
+Exemplo de saída JSON:
 
-Número do contrato: [número do contrato]
-Número da licitação: [número da licitação]
-Data da assinatura: [data da assinatura]
-Data de vencimento: [data de vencimento]
-Fornecedor (contratada): [nome do fornecedor], CNPJ [CNPJ do fornecedor]
-Modalidade da licitação: [modalidade da licitação]
-Objeto do contrato: [objeto do contrato]
-Contratante: [contratante]
-Valor do contrato: [valor do contrato]
+```json
+{
+  "n_contrato": "242/2024",
+  "n_licitacao": "145/2024",
+  "assinatura": "22/07/2024",
+  "vencimento": "",
+  "contratada": "LEANDRO ROBERTO DOS SANTOS",
+  "cnpj": "10.755.146/0001-09",
+  "modalidade": "Inexigibilidade de Licitação",
+  "objeto": "apresentação musical de Forró",
+  "contratante": "Município de Caetité-BA",
+  "valor": "12.000,00",
+  "filename": "caetite.pdf"
+}
 
-Se alguma informação não estiver presente no contrato, indique 'Não informado' no lugar da informação ausente.
+Se alguma informação não estiver presente no contrato, indique uma string vazia ("") no lugar da informação ausente, exceto para vencimento, onde você deve usar "Não informado".
 """
 
 
