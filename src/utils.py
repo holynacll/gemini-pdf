@@ -1,40 +1,48 @@
 import os
-import asyncio
+# import asyncio
 from pathlib import Path
 import pandas as pd
 import fitz
 from fastapi import UploadFile
 from src.config import settings
 
+# async def upload_file(file: UploadFile):
+#     original_file_path = settings.static_dir / f"original_{file.filename}"
+#     optimized_file_path = settings.static_dir / file.filename
+
+#     # Salva o arquivo original temporariamente
+#     with original_file_path.open(mode="wb") as f:
+#         f.write(await file.read())
+
+#     # Otimiza o PDF com Ghostscript (assíncrono)
+#     try:
+#         process = await asyncio.create_subprocess_exec(
+#             'gs', '-sDEVICE=pdfwrite', '-dCompatibilityLevel=1.4', '-dPDFSETTINGS=/default', 
+#             '-dNOPAUSE', '-dQUIET', '-dBATCH', '-o', str(optimized_file_path), str(original_file_path)
+#         )
+#         await process.wait()
+
+#         if process.returncode != 0:
+#             raise Exception(f"Ghostscript optimization failed with return code {process.stderr}")
+
+#         # Remove o arquivo original (opcional, dependendo da sua lógica)
+#         original_file_path.unlink()
+
+#         return optimized_file_path
+
+#     except Exception as e:
+#         # Lidar com erros de otimização
+#         print(f"Error optimizing PDF: {e}")
+#         # Opcionalmente, retornar o caminho do arquivo original se a otimização falhar
+#         return original_file_path
+
+
 async def upload_file(file: UploadFile):
-    original_file_path = settings.static_dir / f"original_{file.filename}"
-    optimized_file_path = settings.static_dir / file.filename
-
+    file_path = settings.static_dir / file.filename
     # Salva o arquivo original temporariamente
-    with original_file_path.open(mode="wb") as f:
+    with file_path.open(mode="wb") as f:
         f.write(await file.read())
-
-    # Otimiza o PDF com Ghostscript (assíncrono)
-    try:
-        process = await asyncio.create_subprocess_exec(
-            'gs', '-sDEVICE=pdfwrite', '-dCompatibilityLevel=1.4', '-dPDFSETTINGS=/default', 
-            '-dNOPAUSE', '-dQUIET', '-dBATCH', '-o', str(optimized_file_path), str(original_file_path)
-        )
-        await process.wait()
-
-        if process.returncode != 0:
-            raise Exception(f"Ghostscript optimization failed with return code {process.stderr}")
-
-        # Remove o arquivo original (opcional, dependendo da sua lógica)
-        original_file_path.unlink()
-
-        return optimized_file_path
-
-    except Exception as e:
-        # Lidar com erros de otimização
-        print(f"Error optimizing PDF: {e}")
-        # Opcionalmente, retornar o caminho do arquivo original se a otimização falhar
-        return original_file_path
+    return file_path
 
 
 def text_parser(text: str):
