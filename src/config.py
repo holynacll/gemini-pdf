@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(Path(__file__).parent.parent.joinpath(".env"))
 
 class Config:
     def __init__(self):
@@ -11,7 +11,7 @@ class Config:
         if not self.static_dir.exists():
             self.static_dir.mkdir(parents=True, exist_ok=True)
         self.google_api_key = os.environ["GOOGLE_API_KEY"]
-        self.port = os.environ["PORT"]
+        self.port = int(os.environ["PORT"])
 
 # Instância global a ser importada
 settings = Config()

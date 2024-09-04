@@ -76,24 +76,16 @@ async def analyze_document(file_path):
     sample_pdf = genai.upload_file(file_path)
     contents = [PROMPT_ANALYZE, sample_pdf]
     raw_response = model.generate_content(contents)
-    if raw_response.is_successful:
-        response = json.loads(raw_response.text)
-        return response
-    else:
-        print(f"Erro na requisição de analyze document: {raw_response.error}")
+    response = json.loads(raw_response.text)
+    return response
 
 
-async def parse_document(text_analyzed: str):
+async def parse_document(text_analyzed: dict):
     model = genai.GenerativeModel(
         "gemini-1.5-flash",
         generation_config={"response_mime_type": "application/json"}
     )
-    contents = [PROMPT_PARSE, text_analyzed]
+    contents = [PROMPT_PARSE, json.dumps(text_analyzed)]
     raw_response = model.generate_content(contents)
-    # Tratamento de erros
-    if raw_response.is_successful:
-        response = json.loads(raw_response.text)
-        return response
-    else:
-        print(f"Erro na requisição de parse document: {raw_response.error}")
-        # Lógica para lidar com o erro (lançar exceção, retornar mensagem, etc.)
+    response = json.loads(raw_response.text)
+    return response
