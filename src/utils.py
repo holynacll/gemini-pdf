@@ -90,7 +90,7 @@ def search_most_large_substrings(sentence: str, text: str, bag_of_words: list[st
     for substring in substrings:
         if substring in text and substring not in bag_of_words:
             bag_of_words.append(substring)
-        
+            return
 
 
 def combinacoes_palavras(sentence):

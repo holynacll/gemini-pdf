@@ -30,7 +30,7 @@ async def analyze_contract(
     text_analyzed = await analyze_document(file_path)
     text_parsed = await parse_document(text_analyzed)
     await update_datasheets(text_parsed)
-    await keywords_highlight(file_path, text_analyzed)
+    await keywords_highlight(file_path, text_parsed)
     text_parsed.update({"filename": file_path.name})
     return JSONResponse(content=text_parsed)
 
@@ -58,8 +58,10 @@ async def analyze_contract_html(
 ):
     file_path = await upload_file(file)
     text_analyzed = await analyze_document(file_path)
-    await update_datasheets(text_analyzed)
+    text_parsed = await parse_document(text_analyzed)
+    await update_datasheets(text_parsed)
     await keywords_highlight(file_path, text_analyzed)
+    text_parsed.update({"filename": file_path.name})
 
     # Construção do HTML
     html_content = f"""
@@ -90,7 +92,7 @@ async def analyze_contract_html(
             </div>
             <div class="analysis-container">
                 <h2>Análise</h2>
-                <pre>{json_to_text_with_newlines(text_analyzed)}</pre>
+                <pre>{json_to_text_with_newlines(text_parsed)}</pre>
             </div>
         </div>
     </body>
