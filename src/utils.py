@@ -78,10 +78,11 @@ async def keywords_highlight(file_path: Path, keywords: dict):
     for page in doc:
         for sentence in bag_of_sentences:
             quads = page.search_for(sentence)
-            for quad in quads:
-                highlight = page.add_highlight_annot(quad)
-                highlight.set_colors(stroke=[1,1,0]) # yellow
-                highlight.update()
+            if quads is not None:
+                for quad in quads:
+                    highlight = page.add_highlight_annot(quad)
+                    highlight.set_colors(stroke=[1,1,0]) # yellow
+                    highlight.update()
     doc.save(file_path.as_posix(), incremental=True, encryption=fitz.PDF_ENCRYPT_KEEP)
 
 
