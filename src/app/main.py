@@ -7,9 +7,9 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from src.config import settings
-from src.utils import upload_file, update_datasheets, keywords_highlight, json_to_text_with_newlines
-from src.contract import analyze_document, parse_document
+from app.config import settings
+from app.utils import upload_file, update_datasheets, keywords_highlight, json_to_text_with_newlines
+from app.contract import analyze_document, parse_document
 
 
 static_path = settings.base_dir / "static"

@@ -6,12 +6,12 @@ load_dotenv(Path(__file__).parent.parent.joinpath(".env"))
 
 class Config:
     def __init__(self):
-        self.base_dir: Path = Path(__file__).parent.parent
+        self.base_dir: Path = Path(__file__).parent.parent.parent
         self.static_dir: Path = self.base_dir / "static"
         if not self.static_dir.exists():
             self.static_dir.mkdir(parents=True, exist_ok=True)
-        self.google_api_key = os.environ["GOOGLE_API_KEY"]
-        self.port = int(os.environ["PORT"])
+        self.google_api_key = "AIzaSyBAfyj7EmgHWtEYLklR4ZEyI1wkhJs7o3w"
+        self.port = 8080
 
 # Instância global a ser importada
 settings = Config()

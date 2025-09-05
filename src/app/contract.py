@@ -1,9 +1,17 @@
 import os
 import json
-import google.generativeai as genai
-from src.config import settings
+from pathlib import Path
+from pydantic import BaseModel
+from pydantic_ai import Agent, BinaryContent
+from pydantic_ai.models.google import GoogleModel
+from pydantic_ai.providers.google import GoogleProvider
 
-genai.configure(api_key=settings.google_api_key)
+from app.config import settings
+
+
+provider = GoogleProvider(api_key=settings.google_api_key)
+model = GoogleModel('gemini-2.5-flash', provider=provider)
+agent = Agent(model)
 
 PROMPT_ANALYZE = """
 Você é um especialista em análise de contratos. Sua tarefa é extrair as seguintes informações de um contrato fornecido, **mantendo o formato original em que aparecem no texto, sem realizar qualquer transformação:**
@@ -46,7 +54,6 @@ Sua tarefa é extrair as seguintes informações de um resumo de contrato fornec
 * **objeto:** Objeto do contrato
 * **contratante:** Nome da Contratante
 * **valor:** Valor do contrato (apenas números e vírgula, sem "R$" ou texto)
-* **filename:** Nome do arquivo PDF
 
 Exemplo de saída JSON:
 
@@ -62,30 +69,43 @@ Exemplo de saída JSON:
   "objeto": "apresentação musical de Forró",
   "contratante": "Município de Caetité-BA",
   "valor": "12.000,00",
-  "filename": "caetite.pdf"
 }
 
 Se alguma informação não estiver presente no contrato, indique uma string vazia ("") no lugar da informação ausente, exceto para vencimento, onde você deve usar "Não informado".
 """
 
-async def analyze_document(file_path):
-    model = genai.GenerativeModel(
-        "gemini-1.5-pro",
-        generation_config={"response_mime_type": "application/json"}
+class Contract(BaseModel):
+    n_contrato: str
+    n_licitacao: str
+    assinatura: str
+    vencimento: str
+    contratada: str
+    cnpj: str
+    modalidade: str
+    objeto: str
+    contratante: str
+    valor: str
+    
+
+async def analyze_document(pdf_path: Path) -> dict:
+    result = await agent.run(
+        [
+            PROMPT_ANALYZE,
+            BinaryContent(data=pdf_path.read_bytes(), media_type='application/pdf'),
+        ],
+        output_type=Contract,
     )
-    sample_pdf = genai.upload_file(file_path)
-    contents = [PROMPT_ANALYZE, sample_pdf]
-    raw_response = model.generate_content(contents)
-    response = json.loads(raw_response.text)
-    return response
+    print(f"Result Analyze: {result}")
+    return result.output.model_dump()
 
 
-async def parse_document(text_analyzed: dict):
-    model = genai.GenerativeModel(
-        "gemini-1.5-flash",
-        generation_config={"response_mime_type": "application/json"}
+async def parse_document(text_analyzed: dict) -> dict:
+    result = await agent.run(
+        [
+            PROMPT_PARSE,
+            json.dumps(text_analyzed),
+        ],
+        output_type=Contract,
     )
-    contents = [PROMPT_PARSE, json.dumps(text_analyzed)]
-    raw_response = model.generate_content(contents)
-    response = json.loads(raw_response.text)
-    return response
+    print(f"Result Parse: {result}")
+    return result.output.model_dump()

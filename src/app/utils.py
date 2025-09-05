@@ -4,7 +4,7 @@ from pathlib import Path
 import pandas as pd
 import fitz
 from fastapi import UploadFile
-from src.config import settings
+from app.config import settings
 
 # async def upload_file(file: UploadFile):
 #     original_file_path = settings.static_dir / f"original_{file.filename}"
@@ -37,9 +37,12 @@ from src.config import settings
 #         return original_file_path
 
 
-async def upload_file(file: UploadFile):
-    file_path = settings.static_dir / file.filename
-    # Salva o arquivo original temporariamente
+async def upload_file(file: UploadFile) -> Path:
+    if not settings.static_dir.exists():
+        settings.static_dir.mkdir(parents=True, exist_ok=True)
+    
+    filename = file.filename if file.filename is not None else "uploaded_file"
+    file_path = settings.static_dir / filename
     with file_path.open(mode="wb") as f:
         f.write(await file.read())
     return file_path
