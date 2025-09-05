@@ -10,7 +10,7 @@ class Config:
         self.static_dir: Path = self.base_dir / "static"
         if not self.static_dir.exists():
             self.static_dir.mkdir(parents=True, exist_ok=True)
-        self.google_api_key = "AIzaSyBAfyj7EmgHWtEYLklR4ZEyI1wkhJs7o3w"
+        self.google_api_key = ""
         self.port = 8080
 
 # Instância global a ser importada
